@@ -1,0 +1,149 @@
+services:
+  frontend:
+    image: soa-project-frontend
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
+
+  api-gateway:
+    image: soa-project-api-gateway
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:8081
+      PRODUCT_CREATE_URL: http://product-create-service:8082
+      PRODUCT_DELETE_URL: http://product-delete-service:8083
+      PRODUCT_UPDATE_URL: http://product-update-service:8084
+      PRODUCT_LIST_URL: http://product-list-service:8085
+      PRODUCT_DETAIL_URL: http://product-detail-service:8086
+    depends_on:
+      - auth-service
+      - product-create-service
+      - product-delete-service
+      - product-update-service
+      - product-list-service
+      - product-detail-service
+    restart: unless-stopped
+
+  auth-service:
+    image: soa-project-auth-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: auth-service
+    ports:
+      - "127.0.0.1:8081:8081"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-local-development-jwt-secret-change-before-deployment-32-bytes}
+      AUTH_USERNAME: ${AUTH_USERNAME:-admin}
+      AUTH_PASSWORD: ${AUTH_PASSWORD:-change-me-local}
+    restart: unless-stopped
+
+  product-create-service:
+    image: soa-project-product-create-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: product-create-service
+    ports:
+      - "127.0.0.1:8082:8082"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-local-development-jwt-secret-change-before-deployment-32-bytes}
+      PRODUCT_DATA_URL: http://product-data-service:8087
+    depends_on:
+      - product-data-service
+    restart: unless-stopped
+
+  product-delete-service:
+    image: soa-project-product-delete-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: product-delete-service
+    ports:
+      - "127.0.0.1:8083:8083"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-local-development-jwt-secret-change-before-deployment-32-bytes}
+      PRODUCT_DATA_URL: http://product-data-service:8087
+    depends_on:
+      - product-data-service
+    restart: unless-stopped
+
+  product-update-service:
+    image: soa-project-product-update-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: product-update-service
+    ports:
+      - "127.0.0.1:8084:8084"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-local-development-jwt-secret-change-before-deployment-32-bytes}
+      PRODUCT_DATA_URL: http://product-data-service:8087
+    depends_on:
+      - product-data-service
+    restart: unless-stopped
+
+  product-list-service:
+    image: soa-project-product-list-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: product-list-service
+    ports:
+      - "127.0.0.1:8085:8085"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-local-development-jwt-secret-change-before-deployment-32-bytes}
+      PRODUCT_DATA_URL: http://product-data-service:8087
+    depends_on:
+      - product-data-service
+    restart: unless-stopped
+
+  product-detail-service:
+    image: soa-project-product-detail-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: product-detail-service
+    ports:
+      - "127.0.0.1:8086:8086"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-local-development-jwt-secret-change-before-deployment-32-bytes}
+      PRODUCT_DATA_URL: http://product-data-service:8087
+    depends_on:
+      - product-data-service
+    restart: unless-stopped
+
+  product-data-service:
+    image: soa-project-product-data-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: product-data-service
+    ports:
+      - "127.0.0.1:8087:8087"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-local-development-jwt-secret-change-before-deployment-32-bytes}
+    volumes:
+      - product-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  product-data:
