@@ -27,6 +27,7 @@ public class GatewayController {
     private final String updateUrl;
     private final String listUrl;
     private final String detailUrl;
+    private final String orderUrl;
 
     public GatewayController(
             @Value("${gateway.auth-url}") String authUrl,
@@ -34,7 +35,8 @@ public class GatewayController {
             @Value("${gateway.delete-url}") String deleteUrl,
             @Value("${gateway.update-url}") String updateUrl,
             @Value("${gateway.list-url}") String listUrl,
-            @Value("${gateway.detail-url}") String detailUrl) {
+            @Value("${gateway.detail-url}") String detailUrl,
+            @Value("${gateway.order-url}") String orderUrl) {
         this.restClient = RestClient.builder().build();
         this.authUrl = authUrl;
         this.createUrl = createUrl;
@@ -42,6 +44,7 @@ public class GatewayController {
         this.updateUrl = updateUrl;
         this.listUrl = listUrl;
         this.detailUrl = detailUrl;
+        this.orderUrl = orderUrl;
     }
 
     @PostMapping("/auth")
@@ -89,6 +92,64 @@ public class GatewayController {
             @PathVariable Integer id,
             HttpServletRequest request) {
         return forward(deleteUrl, HttpMethod.DELETE, "/products/" + id, request, null);
+    }
+
+    @GetMapping("/orders")
+    public ResponseEntity<byte[]> listOrders(HttpServletRequest request) {
+        return forward(orderUrl, HttpMethod.GET, "/orders", request, null);
+    }
+
+    @GetMapping("/orders/{id}")
+    public ResponseEntity<byte[]> findOrderById(
+            @PathVariable Integer id, HttpServletRequest request) {
+        return forward(orderUrl, HttpMethod.GET, "/orders/" + id, request, null);
+    }
+
+    @PostMapping("/orders")
+    public ResponseEntity<byte[]> createOrder(
+            HttpServletRequest request, @RequestBody byte[] body) {
+        return forward(orderUrl, HttpMethod.POST, "/orders", request, body);
+    }
+
+    @PutMapping("/orders/{id}")
+    public ResponseEntity<byte[]> updateOrder(
+            @PathVariable Integer id, HttpServletRequest request, @RequestBody byte[] body) {
+        return forward(orderUrl, HttpMethod.PUT, "/orders/" + id, request, body);
+    }
+
+    @DeleteMapping("/orders/{id}")
+    public ResponseEntity<byte[]> deleteOrder(
+            @PathVariable Integer id, HttpServletRequest request) {
+        return forward(orderUrl, HttpMethod.DELETE, "/orders/" + id, request, null);
+    }
+
+    @GetMapping("/order_items")
+    public ResponseEntity<byte[]> listOrderItems(HttpServletRequest request) {
+        return forward(orderUrl, HttpMethod.GET, "/order_items", request, null);
+    }
+
+    @GetMapping("/order_items/{id}")
+    public ResponseEntity<byte[]> findOrderItemById(
+            @PathVariable Integer id, HttpServletRequest request) {
+        return forward(orderUrl, HttpMethod.GET, "/order_items/" + id, request, null);
+    }
+
+    @PostMapping("/order_items")
+    public ResponseEntity<byte[]> createOrderItem(
+            HttpServletRequest request, @RequestBody byte[] body) {
+        return forward(orderUrl, HttpMethod.POST, "/order_items", request, body);
+    }
+
+    @PutMapping("/order_items/{id}")
+    public ResponseEntity<byte[]> updateOrderItem(
+            @PathVariable Integer id, HttpServletRequest request, @RequestBody byte[] body) {
+        return forward(orderUrl, HttpMethod.PUT, "/order_items/" + id, request, body);
+    }
+
+    @DeleteMapping("/order_items/{id}")
+    public ResponseEntity<byte[]> deleteOrderItem(
+            @PathVariable Integer id, HttpServletRequest request) {
+        return forward(orderUrl, HttpMethod.DELETE, "/order_items/" + id, request, null);
     }
 
     private ResponseEntity<byte[]> forward(

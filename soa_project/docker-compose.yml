@@ -26,6 +26,7 @@ services:
       PRODUCT_UPDATE_URL: http://product-update-service:8084
       PRODUCT_LIST_URL: http://product-list-service:8085
       PRODUCT_DETAIL_URL: http://product-detail-service:8086
+      ORDER_SERVICE_URL: http://order-service:8088
     depends_on:
       - auth-service
       - product-create-service
@@ -33,6 +34,7 @@ services:
       - product-update-service
       - product-list-service
       - product-detail-service
+      - order-service
     restart: unless-stopped
 
   auth-service:
@@ -145,5 +147,24 @@ services:
       - product-data:/app/data
     restart: unless-stopped
 
+  order-service:
+    image: soa-project-order-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: order-service
+    ports:
+      - "127.0.0.1:8088:8088"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-local-development-jwt-secret-change-before-deployment-32-bytes}
+      PRODUCT_DETAIL_URL: http://product-detail-service:8086
+    depends_on:
+      - product-detail-service
+    volumes:
+      - order-data:/app/data
+    restart: unless-stopped
+
 volumes:
   product-data:
+  order-data:

@@ -1,55 +1,27 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Đăng nhập - Quản lý sản phẩm</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Đăng nhập — Biển Xanh</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 420px; margin: 10vh auto; padding: 24px; }
-        label, input, button { display: block; width: 100%; box-sizing: border-box; }
-        input, button { margin-top: 8px; padding: 10px; }
-        label { margin-top: 16px; }
-        #message { color: #b42318; }
+        :root { --ink:#163b50;--muted:#587487;--blue:#167c9c;--deep:#105b78;--line:#d8eaf0; }
+        * { box-sizing:border-box; } body { min-height:100vh;margin:0;display:grid;place-items:center;padding:20px;color:var(--ink);font-family:"Nunito Sans","Segoe UI",sans-serif;background:linear-gradient(135deg,#dff3f2,#f3fafb 54%,#d4eef2); }
+        .login-card { position:relative;overflow:hidden;width:min(100%,430px);padding:38px;border:1px solid #cde5e9;border-radius:24px;background:#ffffffed;box-shadow:0 24px 70px #174f6417; }
+        .login-card:after { content:"";position:absolute;left:-10%;right:-10%;bottom:-100px;height:150px;border-radius:50%;background:#ddf1f2;pointer-events:none; }
+        .content { position:relative;z-index:1; }.brand-mark { display:grid;place-items:center;width:48px;height:48px;border-radius:16px;color:#fff;background:linear-gradient(145deg,#52b6c5,#167c9c); }
+        .brand-mark svg { width:29px;height:29px; } .eyebrow { margin-top:24px;color:var(--blue);font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase; } h1 { margin:8px 0;font-size:32px;letter-spacing:-.03em; } .intro { margin:0 0 24px;color:var(--muted);line-height:1.6; }
+        form { display:grid;gap:14px; } label { display:grid;gap:7px;color:#3f6578;font-size:14px;font-weight:800; } input { width:100%;padding:12px 13px;border:1px solid #cfe1e7;border-radius:11px;background:#fbfefe;color:var(--ink);font:inherit;outline:none; } input:focus { border-color:#3c9eaf;box-shadow:0 0 0 3px #3c9eaf22; }
+        button { margin-top:4px;padding:13px;border:0;border-radius:12px;color:white;background:var(--blue);font:inherit;font-weight:900;cursor:pointer;transition:background .2s; } button:hover { background:var(--deep); } #message { min-height:24px;margin:14px 0 0;color:#a43f49;font-weight:700; } .note { margin:16px 0 0;color:var(--muted);font-size:13px;line-height:1.6; }
+        @media(max-width:480px) { .login-card { padding:28px 23px; } }
+        @media(prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none!important; } }
     </style>
 </head>
 <body>
-<h1>Đăng nhập</h1>
-<form id="loginForm">
-    <label for="userName">Tên đăng nhập</label>
-    <input id="userName" name="userName" autocomplete="username" required>
-    <label for="password">Mật khẩu</label>
-    <input id="password" name="password" type="password" autocomplete="current-password" required>
-    <button type="submit">Đăng nhập</button>
-</form>
-<p id="message" role="alert"></p>
-
+<main class="login-card"><div class="content"><div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 15c2.3 0 2.3-2 4.6-2s2.3 2 4.6 2 2.3-2 4.6-2 2.3 2 4.6 2M3 19c2.3 0 2.3-2 4.6-2s2.3 2 4.6 2 2.3-2 4.6-2 2.3 2 4.6 2M12 3v7m-3-4 3-3 3 3"/></svg></div><div class="eyebrow">Chào mừng bạn đến</div><h1>Biển Xanh</h1><p class="intro">Đăng nhập để khám phá sản phẩm, lưu giỏ hàng và hoàn tất đơn đặt của bạn.</p>
+<form id="loginForm"><label for="userName">Tên đăng nhập<input id="userName" name="userName" autocomplete="username" required></label><label for="password">Mật khẩu<input id="password" name="password" type="password" autocomplete="current-password" required></label><button type="submit">Đăng nhập</button></form><p id="message" role="alert" aria-live="polite"></p><p class="note">Giỏ hàng của bạn sẽ được giữ lại trên thiết bị này sau khi đăng nhập.</p></div></main>
 <script>
-const form = document.getElementById("loginForm");
-const message = document.getElementById("message");
-
-form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    message.textContent = "";
-
-    const body = new URLSearchParams(new FormData(form));
-    try {
-        const response = await fetch("/auth", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body
-        });
-        const data = await response.json();
-        if (!response.ok || !data.token) {
-            message.textContent = data.message || "Đăng nhập thất bại.";
-            return;
-        }
-
-        localStorage.setItem("token", data.token);
-        window.location.replace("/home.html");
-    } catch {
-        message.textContent = "Không thể kết nối đến máy chủ.";
-    }
-});
+const form=document.getElementById("loginForm"), message=document.getElementById("message");
+form.addEventListener("submit",async event=>{event.preventDefault();message.textContent="";const body=new URLSearchParams(new FormData(form));try{const response=await fetch("/auth",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});const data=await response.json();if(!response.ok||!data.token){message.textContent=data.message||"Đăng nhập thất bại.";return;}localStorage.setItem("token",data.token);window.location.replace("/home.html");}catch{message.textContent="Không thể kết nối đến máy chủ.";}});
 </script>
 </body>
 </html>
