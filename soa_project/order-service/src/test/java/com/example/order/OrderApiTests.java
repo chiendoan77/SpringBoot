@@ -54,8 +54,19 @@ class OrderApiTests {
             RestClient client = RestClient.create();
             ObjectMapper objectMapper = new ObjectMapper();
 
-            assertEquals(401, client.get()
+            // GET /orders is now public (for internal reporting-service calls)
+            assertEquals(200, client.get()
                     .uri(serviceUrl + "/orders")
+                    .retrieve()
+                    .toEntity(String.class)
+                    .getStatusCode()
+                    .value());
+
+            // POST /orders without token must fail with 401
+            assertEquals(401, client.post()
+                    .uri(serviceUrl + "/orders")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ORDER_JSON)
                     .retrieve()
                     .onStatus(status -> status.value() == 401, (request, response) -> { })
                     .toEntity(String.class)

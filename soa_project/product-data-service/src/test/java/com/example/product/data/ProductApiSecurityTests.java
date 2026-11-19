@@ -48,11 +48,21 @@ class ProductApiSecurityTests {
 
     @Test
     void productEndpointsRejectMissingAndInvalidTokens() throws Exception {
+        // GET /products is public (for internal service-to-service calls like reporting-service)
         mockMvc.perform(get("/products"))
+                .andExpect(status().isOk());
+
+        // POST requires auth - no token → 401
+        mockMvc.perform(post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"X\",\"description\":\"X\",\"price\":1,\"quantity\":1}"))
                 .andExpect(status().isUnauthorized());
 
-        mockMvc.perform(get("/products")
-                        .header("Authorization", "Bearer not-a-jwt"))
+        // POST with invalid token → 401
+        mockMvc.perform(post("/products")
+                        .header("Authorization", "Bearer not-a-jwt")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"X\",\"description\":\"X\",\"price\":1,\"quantity\":1}"))
                 .andExpect(status().isUnauthorized());
 
         String tokenWithWrongSignature = Jwts.builder()
@@ -61,10 +71,11 @@ class ProductApiSecurityTests {
                 .expiration(new Date(System.currentTimeMillis() + 60_000))
                 .signWith(Jwts.SIG.HS256.key().build())
                 .compact();
-        mockMvc.perform(get("/products")
-                        .header("Authorization", "Bearer " + tokenWithWrongSignature))
+        mockMvc.perform(post("/products")
+                        .header("Authorization", "Bearer " + tokenWithWrongSignature)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"X\",\"description\":\"X\",\"price\":1,\"quantity\":1}"))
                 .andExpect(status().isUnauthorized());
-
     }
 
     @Test

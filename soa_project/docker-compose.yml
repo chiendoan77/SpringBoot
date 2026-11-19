@@ -90,6 +90,8 @@ services:
       - "127.0.0.1:8089:8089"
     environment:
       JWT_SECRET: ${JWT_SECRET:-local-development-jwt-secret-change-before-deployment-32-bytes}
+      PRODUCT_SERVICE_URL: http://product-data-service:8085
+      ORDER_SERVICE_URL: http://order-service:8088
     depends_on:
       - product-data-service
       - order-service

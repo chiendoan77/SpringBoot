@@ -16,16 +16,36 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @Service
 public class ReportingService {
     private final RestTemplate restTemplate = new RestTemplate();
-    private static final String PRODUCT_SERVICE_URL = "http://localhost:8081/api/v1/products";
-    private static final String ORDER_SERVICE_URL = "http://localhost:8084/api/v1/orders";
+    private final String productServiceUrl;
+    private final String orderServiceUrl;
+
+    public ReportingService(
+            @Value("${product.service.url:http://localhost:8085}") String productServiceUrl,
+            @Value("${order.service.url:http://localhost:8088}") String orderServiceUrl) {
+        this.productServiceUrl = productServiceUrl;
+        this.orderServiceUrl = orderServiceUrl;
+    }
 
     private List<ExternalData.ProductDto> fetchProducts() {
         try {
             ResponseEntity<List<ExternalData.ProductDto>> response = restTemplate.exchange(
-                    PRODUCT_SERVICE_URL,
+                    productServiceUrl + "/products",
                     HttpMethod.GET,
                     null,
                     new ParameterizedTypeReference<List<ExternalData.ProductDto>>() {}
@@ -39,7 +59,7 @@ public class ReportingService {
     private List<ExternalData.OrderDto> fetchOrders() {
         try {
             ResponseEntity<List<ExternalData.OrderDto>> response = restTemplate.exchange(
-                    ORDER_SERVICE_URL,
+                    orderServiceUrl + "/orders",
                     HttpMethod.GET,
                     null,
                     new ParameterizedTypeReference<List<ExternalData.OrderDto>>() {}
@@ -60,18 +80,19 @@ public class ReportingService {
         BigDecimal totalCosts = BigDecimal.ZERO;
 
         for (ExternalData.OrderDto order : orders) {
-            // Count completed/delivered or all valid orders as sales
-            if (order.getItems() != null) {
-                for (ExternalData.OrderItemDto item : order.getItems()) {
-                    int qty = item.getQuantity() != null ? item.getQuantity() : 0;
-                    BigDecimal price = item.getPrice() != null ? item.getPrice() : BigDecimal.ZERO;
-                    BigDecimal rev = price.multiply(BigDecimal.valueOf(qty));
-                    
-                    totalSalesVolume += qty;
-                    totalRevenue = totalRevenue.add(rev);
-                    // Assuming COGS (cost of goods sold) is estimated at 60% of price for reporting demonstration
-                    BigDecimal cost = rev.multiply(BigDecimal.valueOf(0.60));
-                    totalCosts = totalCosts.add(cost);
+            String status = order.getStatus() != null ? order.getStatus().trim().toLowerCase() : "";
+            if ("completed".equals(status)) {
+                if (order.getItems() != null) {
+                    for (ExternalData.OrderItemDto item : order.getItems()) {
+                        int qty = item.getQuantity() != null ? item.getQuantity() : 0;
+                        BigDecimal price = item.getUnitPrice() != null ? item.getUnitPrice() : (item.getPrice() != null ? item.getPrice() : BigDecimal.ZERO);
+                        BigDecimal rev = price.multiply(BigDecimal.valueOf(qty));
+                        
+                        totalSalesVolume += qty;
+                        totalRevenue = totalRevenue.add(rev);
+                        BigDecimal cost = rev.multiply(BigDecimal.valueOf(0.60));
+                        totalCosts = totalCosts.add(cost);
+                    }
                 }
             }
         }
@@ -95,15 +116,18 @@ public class ReportingService {
         Map<Integer, BigDecimal> revenueMap = new HashMap<>();
 
         for (ExternalData.OrderDto order : orders) {
-            if (order.getItems() != null) {
-                for (ExternalData.OrderItemDto item : order.getItems()) {
-                    if (item.getProductId() != null) {
-                        int qty = item.getQuantity() != null ? item.getQuantity() : 0;
-                        BigDecimal price = item.getPrice() != null ? item.getPrice() : BigDecimal.ZERO;
-                        BigDecimal rev = price.multiply(BigDecimal.valueOf(qty));
+            String status = order.getStatus() != null ? order.getStatus().trim().toLowerCase() : "";
+            if ("completed".equals(status)) {
+                if (order.getItems() != null) {
+                    for (ExternalData.OrderItemDto item : order.getItems()) {
+                        if (item.getProductId() != null) {
+                            int qty = item.getQuantity() != null ? item.getQuantity() : 0;
+                            BigDecimal price = item.getUnitPrice() != null ? item.getUnitPrice() : (item.getPrice() != null ? item.getPrice() : BigDecimal.ZERO);
+                            BigDecimal rev = price.multiply(BigDecimal.valueOf(qty));
 
-                        salesVolumeMap.put(item.getProductId(), salesVolumeMap.getOrDefault(item.getProductId(), 0L) + qty);
-                        revenueMap.put(item.getProductId(), revenueMap.getOrDefault(item.getProductId(), BigDecimal.ZERO).add(rev));
+                            salesVolumeMap.put(item.getProductId(), salesVolumeMap.getOrDefault(item.getProductId(), 0L) + qty);
+                            revenueMap.put(item.getProductId(), revenueMap.getOrDefault(item.getProductId(), BigDecimal.ZERO).add(rev));
+                        }
                     }
                 }
             }
@@ -136,32 +160,35 @@ public class ReportingService {
         List<OrderReportResponse> reports = new ArrayList<>();
 
         for (ExternalData.OrderDto order : orders) {
-            int totalItems = 0;
-            BigDecimal revenue = BigDecimal.ZERO;
+            String status = order.getStatus() != null ? order.getStatus().trim().toLowerCase() : "";
+            if ("completed".equals(status)) {
+                int totalItems = 0;
+                BigDecimal revenue = BigDecimal.ZERO;
 
-            if (order.getItems() != null) {
-                for (ExternalData.OrderItemDto item : order.getItems()) {
-                    int qty = item.getQuantity() != null ? item.getQuantity() : 0;
-                    BigDecimal price = item.getPrice() != null ? item.getPrice() : BigDecimal.ZERO;
-                    totalItems += qty;
-                    revenue = revenue.add(price.multiply(BigDecimal.valueOf(qty)));
+                if (order.getItems() != null) {
+                    for (ExternalData.OrderItemDto item : order.getItems()) {
+                        int qty = item.getQuantity() != null ? item.getQuantity() : 0;
+                        BigDecimal price = item.getUnitPrice() != null ? item.getUnitPrice() : (item.getPrice() != null ? item.getPrice() : BigDecimal.ZERO);
+                        totalItems += qty;
+                        revenue = revenue.add(price.multiply(BigDecimal.valueOf(qty)));
+                    }
                 }
+
+                BigDecimal costs = revenue.multiply(BigDecimal.valueOf(0.60));
+                BigDecimal netProfit = revenue.subtract(costs);
+
+                reports.add(new OrderReportResponse(
+                        order.getId(),
+                        order.getCustomerName(),
+                        order.getCustomerEmail(),
+                        order.getStatus(),
+                        order.getCreatedAt(),
+                        totalItems,
+                        revenue,
+                        costs,
+                        netProfit
+                ));
             }
-
-            BigDecimal costs = revenue.multiply(BigDecimal.valueOf(0.60));
-            BigDecimal netProfit = revenue.subtract(costs);
-
-            reports.add(new OrderReportResponse(
-                    order.getId(),
-                    order.getCustomerName(),
-                    order.getCustomerEmail(),
-                    order.getStatus(),
-                    order.getCreatedAt(),
-                    totalItems,
-                    revenue,
-                    costs,
-                    netProfit
-            ));
         }
 
         return reports;
