@@ -25,7 +25,7 @@ class GatewayRoutingTests {
         AtomicReference<String> productRequest = new AtomicReference<>();
         AtomicReference<String> orderRequest = new AtomicReference<>();
         HttpServer authServer = fakeService(authRequest, 200, "{\"token\":\"signed-token\"}");
-        HttpServer createServer = fakeService(productRequest, 201, "{\"name\":\"Keyboard\"}");
+        HttpServer productServer = fakeService(productRequest, 201, "{\"name\":\"Keyboard\"}");
         HttpServer orderServer = fakeService(orderRequest, 200, "[{\"id\":1}]");
 
         try (var context = new SpringApplicationBuilder(ApiGatewayApplication.class)
@@ -33,11 +33,7 @@ class GatewayRoutingTests {
                 .run(
                         "--server.port=0",
                         "--gateway.auth-url=http://127.0.0.1:" + authServer.getAddress().getPort(),
-                        "--gateway.create-url=http://127.0.0.1:" + createServer.getAddress().getPort(),
-                        "--gateway.delete-url=http://127.0.0.1:" + createServer.getAddress().getPort(),
-                        "--gateway.update-url=http://127.0.0.1:" + createServer.getAddress().getPort(),
-                        "--gateway.list-url=http://127.0.0.1:" + createServer.getAddress().getPort(),
-                        "--gateway.detail-url=http://127.0.0.1:" + createServer.getAddress().getPort(),
+                        "--gateway.product-url=http://127.0.0.1:" + productServer.getAddress().getPort(),
                         "--gateway.order-url=http://127.0.0.1:" + orderServer.getAddress().getPort())) {
             int port = ((WebServerApplicationContext) context).getWebServer().getPort();
             String gatewayUrl = "http://127.0.0.1:" + port;
@@ -72,7 +68,7 @@ class GatewayRoutingTests {
             assertTrue(orderRequest.get().contains("Bearer test-token"));
         } finally {
             authServer.stop(0);
-            createServer.stop(0);
+            productServer.stop(0);
             orderServer.stop(0);
         }
     }

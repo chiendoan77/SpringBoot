@@ -20,7 +20,7 @@ import com.example.product.data.dto.ProductRequest;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/internal/products")
+@RequestMapping("/products")
 public class ProductDataController {
     private final ProductService productService;
 

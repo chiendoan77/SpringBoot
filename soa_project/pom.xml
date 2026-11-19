@@ -19,13 +19,9 @@
     <modules>
         <module>api-gateway</module>
         <module>auth-service</module>
-        <module>product-create-service</module>
-        <module>product-delete-service</module>
-        <module>product-update-service</module>
-        <module>product-list-service</module>
-        <module>product-detail-service</module>
         <module>product-data-service</module>
         <module>order-service</module>
+        <module>reporting-service</module>
     </modules>
 
     <properties>

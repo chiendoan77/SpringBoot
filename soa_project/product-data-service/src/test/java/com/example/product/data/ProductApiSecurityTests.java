@@ -48,10 +48,10 @@ class ProductApiSecurityTests {
 
     @Test
     void productEndpointsRejectMissingAndInvalidTokens() throws Exception {
-        mockMvc.perform(get("/internal/products"))
+        mockMvc.perform(get("/products"))
                 .andExpect(status().isUnauthorized());
 
-        mockMvc.perform(get("/internal/products")
+        mockMvc.perform(get("/products")
                         .header("Authorization", "Bearer not-a-jwt"))
                 .andExpect(status().isUnauthorized());
 
@@ -61,7 +61,7 @@ class ProductApiSecurityTests {
                 .expiration(new Date(System.currentTimeMillis() + 60_000))
                 .signWith(Jwts.SIG.HS256.key().build())
                 .compact();
-        mockMvc.perform(get("/internal/products")
+        mockMvc.perform(get("/products")
                         .header("Authorization", "Bearer " + tokenWithWrongSignature))
                 .andExpect(status().isUnauthorized());
 
@@ -69,7 +69,7 @@ class ProductApiSecurityTests {
 
     @Test
     void productServiceDoesNotExposeOptionsAsAnApi() throws Exception {
-        mockMvc.perform(get("/internal/products").header("Authorization", "Bearer " + token()))
+        mockMvc.perform(get("/products").header("Authorization", "Bearer " + token()))
                 .andExpect(status().isOk());
     }
 
@@ -78,7 +78,7 @@ class ProductApiSecurityTests {
         String token = token();
         String authorization = "Bearer " + token;
 
-        MvcResult createResult = mockMvc.perform(post("/internal/products")
+        MvcResult createResult = mockMvc.perform(post("/products")
                         .header("Authorization", authorization)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -94,17 +94,17 @@ class ProductApiSecurityTests {
                 createResult.getResponse().getContentAsString());
         int productId = createdProduct.get("id").asInt();
 
-        mockMvc.perform(get("/internal/products/{id}", productId)
+        mockMvc.perform(get("/products/{id}", productId)
                         .header("Authorization", authorization))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.quantity").value(12));
 
-        mockMvc.perform(get("/internal/products")
+        mockMvc.perform(get("/products")
                         .header("Authorization", authorization))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
 
-        mockMvc.perform(put("/internal/products/{id}", productId)
+        mockMvc.perform(put("/products/{id}", productId)
                         .header("Authorization", authorization)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -114,11 +114,11 @@ class ProductApiSecurityTests {
                 .andExpect(jsonPath("$.name").value("Keyboard Pro"))
                 .andExpect(jsonPath("$.quantity").value(5));
 
-        mockMvc.perform(delete("/internal/products/{id}", productId)
+        mockMvc.perform(delete("/products/{id}", productId)
                         .header("Authorization", authorization))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/internal/products/{id}", productId)
+        mockMvc.perform(get("/products/{id}", productId)
                         .header("Authorization", authorization))
                 .andExpect(status().isNotFound());
     }
@@ -127,7 +127,7 @@ class ProductApiSecurityTests {
     void invalidProductFieldsAreRejected() throws Exception {
         String token = token();
 
-        mockMvc.perform(post("/internal/products")
+        mockMvc.perform(post("/products")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""

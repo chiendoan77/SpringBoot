@@ -22,29 +22,20 @@ import org.springframework.web.client.RestClient;
 public class GatewayController {
     private final RestClient restClient;
     private final String authUrl;
-    private final String createUrl;
-    private final String deleteUrl;
-    private final String updateUrl;
-    private final String listUrl;
-    private final String detailUrl;
+    private final String productUrl;
     private final String orderUrl;
+    private final String reportingUrl;
 
     public GatewayController(
             @Value("${gateway.auth-url}") String authUrl,
-            @Value("${gateway.create-url}") String createUrl,
-            @Value("${gateway.delete-url}") String deleteUrl,
-            @Value("${gateway.update-url}") String updateUrl,
-            @Value("${gateway.list-url}") String listUrl,
-            @Value("${gateway.detail-url}") String detailUrl,
-            @Value("${gateway.order-url}") String orderUrl) {
+            @Value("${gateway.product-url:http://localhost:8085}") String productUrl,
+            @Value("${gateway.order-url}") String orderUrl,
+            @Value("${gateway.reporting-url:http://localhost:8089}") String reportingUrl) {
         this.restClient = RestClient.builder().build();
         this.authUrl = authUrl;
-        this.createUrl = createUrl;
-        this.deleteUrl = deleteUrl;
-        this.updateUrl = updateUrl;
-        this.listUrl = listUrl;
-        this.detailUrl = detailUrl;
+        this.productUrl = productUrl;
         this.orderUrl = orderUrl;
+        this.reportingUrl = reportingUrl;
     }
 
     @PostMapping("/auth")
@@ -60,23 +51,22 @@ public class GatewayController {
     }
 
     @GetMapping("/products")
-    public ResponseEntity<byte[]> list(
-            HttpServletRequest request) {
-        return forward(listUrl, HttpMethod.GET, "/products", request, null);
+    public ResponseEntity<byte[]> list(HttpServletRequest request) {
+        return forward(productUrl, HttpMethod.GET, "/products", request, null);
     }
 
     @GetMapping("/products/{id}")
     public ResponseEntity<byte[]> findById(
             @PathVariable Integer id,
             HttpServletRequest request) {
-        return forward(detailUrl, HttpMethod.GET, "/products/" + id, request, null);
+        return forward(productUrl, HttpMethod.GET, "/products/" + id, request, null);
     }
 
     @PostMapping("/products")
     public ResponseEntity<byte[]> create(
             HttpServletRequest request,
             @RequestBody byte[] body) {
-        return forward(createUrl, HttpMethod.POST, "/products", request, body);
+        return forward(productUrl, HttpMethod.POST, "/products", request, body);
     }
 
     @PutMapping("/products/{id}")
@@ -84,14 +74,14 @@ public class GatewayController {
             @PathVariable Integer id,
             HttpServletRequest request,
             @RequestBody byte[] body) {
-        return forward(updateUrl, HttpMethod.PUT, "/products/" + id, request, body);
+        return forward(productUrl, HttpMethod.PUT, "/products/" + id, request, body);
     }
 
     @DeleteMapping("/products/{id}")
     public ResponseEntity<byte[]> delete(
             @PathVariable Integer id,
             HttpServletRequest request) {
-        return forward(deleteUrl, HttpMethod.DELETE, "/products/" + id, request, null);
+        return forward(productUrl, HttpMethod.DELETE, "/products/" + id, request, null);
     }
 
     @GetMapping("/orders")
@@ -150,6 +140,21 @@ public class GatewayController {
     public ResponseEntity<byte[]> deleteOrderItem(
             @PathVariable Integer id, HttpServletRequest request) {
         return forward(orderUrl, HttpMethod.DELETE, "/order_items/" + id, request, null);
+    }
+
+    @GetMapping("/reports/summary")
+    public ResponseEntity<byte[]> getSummaryReport(HttpServletRequest request) {
+        return forward(reportingUrl, HttpMethod.GET, "/api/v1/reports/summary", request, null);
+    }
+
+    @GetMapping("/reports/products")
+    public ResponseEntity<byte[]> getProductReports(HttpServletRequest request) {
+        return forward(reportingUrl, HttpMethod.GET, "/api/v1/reports/products", request, null);
+    }
+
+    @GetMapping("/reports/orders")
+    public ResponseEntity<byte[]> getOrderReports(HttpServletRequest request) {
+        return forward(reportingUrl, HttpMethod.GET, "/api/v1/reports/orders", request, null);
     }
 
     private ResponseEntity<byte[]> forward(
